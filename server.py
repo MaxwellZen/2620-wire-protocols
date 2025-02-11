@@ -2,6 +2,7 @@ import socket
 import selectors 
 import types 
 from utils import decode_request, encode_request
+from fnmatch import fnmatch
 
 sel = selectors.DefaultSelector()
 
@@ -12,6 +13,8 @@ PORT = 54400
 users = {}
 
 def create_account(username, data):
+    if data.logged_in:
+        return f"ERROR: already logged in to account {data.username}"
     if username in users:
         return "Username taken. Please login with your password"
     else:
@@ -20,6 +23,8 @@ def create_account(username, data):
         return "Enter password to create new account"
 
 def supply_pass(password, data):
+    if data.logged_in:
+        return f"ERROR: already logged in to account {data.username}"
     if data.supplying_pass:
         users.update({data.username: (password, [])})
         data.supplying_pass = False
@@ -27,53 +32,77 @@ def supply_pass(password, data):
     return "ERROR: should not be supplying password"
         
 def login(username, password, data):
+    if data.logged_in:
+        return f"ERROR: already logged in to account {data.username}"
     if username in users:
-        if (password == users[username][1]):
+        if (password == users[username][0]):
             data.username = username
-            data.loggedin = True
-            return "SUCCESS"
+            data.logged_in = True
+            return "SUCCESS: logged in"
     return "ERROR: username does not exist. Please create a new account"
 
-def list_accounts(data):
-    return
+def list_accounts(pattern=""):
+    accounts = [user for user in users if fnmatch(user, pattern)]
+    # TODO If there are more accounts than can comfortably be displayed, allow iterating through the accounts.
+    count = len(accounts)
+    return f"{count}" + " ".join(accounts)
 
-def send(username, message, data):
-    return
+def send(recipient, message, data):
+    if not data.loggedin:
+        return "ERROR: not logged in"
+    if recipient not in users:
+        return "ERROR: recipient does not exist"
+    # TODO temp solution: theoretically ID's are in order, would get messed up if processed in wrong order
+    id = str(len(users[recipient][1]))  
+    users[recipient][1].append((data.username, id, message))
+    return "SUCCESS: message sent"
 
 def read(count, data):
+    if not data.loggedin:
+        return "ERROR: not logged in"
+    to_read = users[data.username][1][:int(count)]
+
     return
 
 def delete_msg(IDs, data):
+    if not data.loggedin:
+        return "ERROR: not logged in"
     return
 
 def delete_account(data):
-    if data.loggedin:
-        # need to delete all msgs
-        users.pop(data.username)
-        data.username = None
-        data.loggedout = False
-        return "SUCCESS"
-    return "ERROR: not logged in"
+    if not data.loggedin:
+        return "ERROR: not logged in"
+    # need to delete all msgs
+    users.pop(data.username)
+    data.username = None
+    data.logged_in = False
+    return "SUCCESS: account deleted"
 
 def logout(data):
-    if data.loggedin:
-        data.username = None
-        data.loggedout = False
-        return "SUCCESS"
-    return "ERROR: not logged in"
+    if not data.loggedin:
+        return "ERROR: not logged in"
+    data.username = None
+    data.logged_in = False
+    return "SUCCESS: logged out"
 
 def handle_command(request, data):
     request = decode_request(request)
     command = request[0]
     match command:
+        # can paste in try except for each case for index errors
         case "create_account":
-            return create_account(request[1], data)
+            try:
+                return create_account(request[1], data)
+            except IndexError:
+                return "usage: create_account [username]"
+            except:
+                return "ERROR: create_account"
         case "supply_pass":
             return supply_pass(request[1], data)
         case "login":
             return login(request[1], request[2], data)
         case "list_accounts":
-            return list_accounts(data)
+            return list_accounts(request[1])
         case "send":
             return send(request[1], request[2], data)
         case "read":

@@ -5,7 +5,7 @@ HOST = "127.0.0.1"
 PORT = 54400
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.connect(HOST, PORT)
+    s.connect((HOST, PORT))
     while True:
         message = input("Enter a message to send to the server: ")
         if message == "exit":
