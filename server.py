@@ -1,6 +1,7 @@
 import socket
 import selectors 
 import types 
+from utils import decode_request, encode_request
 
 sel = selectors.DefaultSelector()
 
@@ -9,12 +10,6 @@ HOST = "127.0.0.1"
 PORT = 54400
 
 users = {}
-
-def encode_request(request):
-    return
-
-def decode_request(request):
-    return
 
 def create_account(username, data):
     if username in users:
@@ -108,15 +103,15 @@ def service_connection(key, mask):
     if mask & selectors.EVENT_READ:
         recv_data = sock.recv(1024)
         if recv_data:
-            # data.outb += recv_data
-            return_data = handle_command(recv_data, data)
+            data.outb += recv_data
         else:
             print(f"Closing connection to {data.addr}")
             sel.unregister(sock)
             sock.close()
     if mask & selectors.EVENT_WRITE:
         if data.outb:
-            # return_data = "" # originally translating data.outb to pig latin
+            return_data = handle_command(data.outb.decode("utf-8"), data)
+            return_data = return_data.encode("utf-8")
             sent = sock.send(return_data)
             data.outb = data.outb[sent:]
 
