@@ -13,6 +13,8 @@ users = {}
 
 def create_account(username, data):
     if username in users:
+        data.username = username 
+        data.supplying_pass = True
         return "Username taken. Please login with your password"
     else:
         data.username = username
@@ -21,9 +23,19 @@ def create_account(username, data):
 
 def supply_pass(password, data):
     if data.supplying_pass:
-        users.update({data.username: (password, [])})
-        data.supplying_pass = False
-        return "Account created. Please login with your new account"
+        username = data.username
+        if username in users:
+            if password == users[username][0]:
+                data.supplying_pass = False 
+                data.logged_in = True
+                return "Logged in"
+            else:
+                return "Wrong password, please try again"
+        else:
+            users.update({data.username: (password, [])})
+            data.supplying_pass = False
+            data.username = None
+            return "Account created. Please login with your new account"
     return "ERROR: should not be supplying password"
         
 def login(username, password, data):
