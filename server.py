@@ -26,7 +26,7 @@ def supply_pass(password, data):
     if data.logged_in:
         return f"ERROR: already logged in to account {data.username}"
     if data.supplying_pass:
-        users.update({data.username: (password, [])})
+        users.update({data.username: [password, []]})
         data.supplying_pass = False
         return "SUCCESS: account created. Please login with your new account"
     return "ERROR: should not be supplying password"
@@ -100,8 +100,10 @@ def num_msg(data):
     return str(len(users[data.username][1]))
 
 def handle_command(request, data):
+    print(f"received request: [{request}]")
     request = decode_request(request)
     command = request[0]
+    print("handling command:", command, request)
     match command:
         # TODO can paste try except into each case for index errors
         case "create_account":
@@ -159,7 +161,7 @@ def service_connection(key, mask):
             return_data = handle_command(data.outb.decode("utf-8"), data)
             return_data = return_data.encode("utf-8")
             sent = sock.send(return_data)
-            data.outb = data.outb[sent:]
+            data.outb = b""
 
 if __name__ == "__main__":
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
