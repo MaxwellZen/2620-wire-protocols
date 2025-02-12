@@ -74,10 +74,7 @@ def delete_msg(IDs, data):
     if not data.logged_in:
         return "ERROR: not logged in"
     messages = users[data.username][1]
-    print(messages)
-    print(IDs)
     updated_messages = [msg for msg in messages if int(msg[1]) not in IDs]
-    print(updated_messages)
     users[data.username][1] = updated_messages
     return "SUCCESS: messages deleted"
 
