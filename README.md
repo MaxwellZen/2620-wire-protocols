@@ -58,3 +58,12 @@ logout:
 num_msg: 
 - Returns the number of unread messages for the logged-in user.
 - output: n
+
+Example commands:
+- create_account [andrew]
+- supply_pass [password]
+- login [andrew] [password]
+Assuming you also created another account named maxwell:
+- send [maxwell] [hello!]
+- read [10]
+- logout 
