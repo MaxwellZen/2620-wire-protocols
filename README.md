@@ -60,10 +60,11 @@ num_msg:
 - output: n
 
 Example commands:
-- create_account [andrew]
+- create_account [alice]
 - supply_pass [password]
-- login [andrew] [password]
-Assuming you also created another account named maxwell:
-- send [maxwell] [hello!]
+- login [alice] [password]
+
+Assuming you also created another account named bob:
+- send [bob] [hello!]
 - read [10]
 - logout 
