@@ -39,6 +39,8 @@ def login(username, password, data):
             data.username = username
             data.logged_in = True
             return "SUCCESS: logged in"
+        else:
+            return "Password is incorrect. Please try again"
     return "Username does not exist. Please create a new account"
 
 def list_accounts(pattern):
@@ -54,20 +56,21 @@ def send(recipient, message, data):
         return "ERROR: recipient does not exist"
     # TODO temp solution: theoretically ID's are in order, would get messed up if processed in wrong order
     id = str(len(users[recipient][1]))
-    users[recipient][1].append((data.username, id, False, message))
+    users[recipient][1].append([data.username, id, False, message])
     return "SUCCESS: message sent"
 
 def read(count, data):
     if not data.logged_in:
         return "ERROR: not logged in"
-    count = min(count, len(users[data.username][1]))
-    to_read = users[data.username][1][:int(count)]
-    messages = [f"{sender} {msg_id} {msg}" for sender, msg_id, _, msg in to_read]
-    for i in range(len(to_read)):
-        sender, msg_id, _, msg = to_read[i]
-        to_read[i] = (sender, msg_id, True, msg)
-    users[data.username][1][:int(count)] = to_read
-    return f"[{len(to_read)}] " + " ".join(messages)
+    all_messages = users[data.username][1]
+    count = min(count, len(all_messages))
+    to_read = all_messages[len(all_messages) - count:]
+    messages = []
+    for sender, msg_id, _, msg in to_read:
+        messages.extend([sender, msg_id, msg])
+    for i in range(count):
+        users[data.username][1][len(all_messages) - count + i][2] = True 
+    return encode_request(str(count), messages)
 
 def delete_msg(IDs, data):
     if not data.logged_in:
