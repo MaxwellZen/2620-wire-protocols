@@ -7,6 +7,8 @@ import emoji
 import sys
 import json
 
+USE_JSON = True
+
 """
 ChatApp: wrapper for the tkinter GUI. 
 
@@ -649,7 +651,7 @@ def main():
     host = sys.argv[1]
     port = int(sys.argv[2])
 
-    chatapp = ChatApp(host, port, True)
+    chatapp = ChatApp(host, port, USE_JSON)
     chatapp.main_loop()
 
 if __name__ == "__main__":
