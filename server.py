@@ -14,7 +14,7 @@ users = {}
 
 def create_account(username, data):
     if data.logged_in:
-        return f"ERROR: already logged in to account {data.username}"
+        return f"ERROR: already logged into account {data.username}"
     if username in users:
         return "Username taken. Please login with your password"
     else:
@@ -77,7 +77,7 @@ def delete_msg(IDs, data):
         return "ERROR: not logged in"
     messages = users[data.username][1]
     users[data.username][1] = [msg for msg in messages if msg[1] not in IDs]
-    return "SUCCESS: Messages deleted"
+    return "SUCCESS: messages deleted"
 
 def delete_account(data):
     if not data.logged_in:
@@ -124,7 +124,7 @@ def handle_command(request, data):
         case "logout":
             return logout(data)
         case _:
-            return "ERROR: Invalid command"
+            return "ERROR: invalid command"
 
 def accept_wrapper(sock):
     conn, addr = sock.accept()

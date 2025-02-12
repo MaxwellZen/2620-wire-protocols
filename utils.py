@@ -32,6 +32,33 @@ def decode_request(request):
             ind += 1
     return args
 
+def encode_json(input):
+    args = decode_request(input)
+    command = args[0]
+    request = {"command": command}
+    match command:
+        case "create_account":
+            request["username"] = args[1]
+        case "supply_pass":
+            request["password"] = args[1]
+        case "login":
+            request["username"] = args[1]
+            request["password"] = args[2]
+        case "list_accounts":
+            request["pattern"] = args[1] if len(args) > 1 else "*"
+        case "send":
+            request["recipient"] = args[1]
+            request["message"] = " ".join(args[2:])
+        case "read":
+            request["count"] = int(args[1])
+        case "delete_msg":
+            request["ids"] = args[1:]
+        case "delete_account" | "logout":
+            pass
+        case _:
+            raise Exception("ERROR: Invalid command")
+    return request
+
 def test_encode_request():
     assert(encode_request("abc", ["def", "ghi"]) == "abc [def] [ghi]")
     assert(encode_request("abc", ["[][]\\\\"]) == "abc [\[\]\[\]\\\\\\\\]")
@@ -42,6 +69,12 @@ def test_decode_request():
     assert(decode_request("abc [\[\]\]\]\[\\\\]") == ["abc", "[]]][\\"])
     print("decode_request tests passed")
 
+def test_encode_json():
+    assert(encode_json("create_account [abc]") == {"command": "create_account", "username": "abc"})
+    assert(encode_json("login [abc] [def]") == {"command": "login", "username": "abc", "password": "def"})
+    print("encode_json tests passed")
+
 if __name__ == "__main__":
     test_encode_request()
     test_decode_request()
+    test_encode_json()
