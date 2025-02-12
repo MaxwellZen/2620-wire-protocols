@@ -1,12 +1,72 @@
 1/10
 ___
 
-Maxwell: Admittedly starting the project today - started with the client-server code from lecture and worked with Andrew to establish a protocol with what the client can send the server and what it should expect in return. Then the only thing I worked on today was the function to decode a request, since we came up with a custom system to put arguments in brackets while also representing brackets in text using backslashes (similar to how backslashes are normally usesd to put quotation marks in strings). 
+Maxwell: Admittedly starting the project today - started with the client-server 
+        code from lecture and worked with Andrew to establish a protocol with 
+        what the client can send the server and what it should expect in return. 
+        Then the only thing I worked on today was the function to decode a request, 
+        since we came up with a custom system to put arguments in brackets while 
+        also representing brackets in text using backslashes (similar to how 
+        backslashes are normally usesd to put quotation marks in strings). 
+
+Andrew: Worked on designing the custom wire protocol with Maxwell. Then, I moved
+        to work on setting up a skeleton for all of the commands that we decided
+        we would end up using. I set up some bits of implementation for storage of
+        information like the dictionary to hold the password and messages for all
+        users and the information we would store on the sockets—namely the name
+        of the logged in user, whether a user is logged in, and whether they are in
+        the middle of supplying a password for account creation. I added functionality 
+        for creating accounts and logging in. 
 
 1/11
 ___
 
-Maxwell: Crunch time - I left Andrew in charge of the server call-and-response type stuff and started work on the GUI. Read through the GeeksforGeeks tutorial on tkinter, then got to work. Initially I was going to make all the elements global variables but then I realized how many functions I would have to declare all the globals in, so I put everything in a class so that variables and functions can be declared in any order without it mattering. The GUI is built around 7 menus and from the second or third menu on I got more consistent in naming variables and functions after the menu they belong in, but I didn't follow that convention for the first two menus and so some of the variables are a little bit confusing (but that is what one must sacrifice when doing most of the project the day before). I wish I also had time to make the GUI look just a little bit more structured, since currently I have every element stacked top-down, but maybe I'll get to that for the Friday submission.
+Maxwell: Crunch time - I left Andrew in charge of the server call-and-response 
+        type stuff and started work on the GUI. Read through the GeeksforGeeks 
+        tutorial on tkinter, then got to work. Initially I was going to make all 
+        the elements global variables but then I realized how many functions I 
+        would have to declare all the globals in, so I put everything in a class
+        so that variables and functions can be declared in any order without it 
+        mattering. The GUI is built around 7 menus and from the second or third 
+        menu on I got more consistent in naming variables and functions after the 
+        menu they belong in, but I didn't follow that convention for the first two 
+        menus and so some of the variables are a little bit confusing (but that is
+        what one must sacrifice when doing most of the project the day before). I 
+        wish I also had time to make the GUI look just a little bit more structured, 
+        since currently I have every element stacked top-down, but maybe I'll get to 
+        that for the Friday submission.
+
+Andrew: Crunch time indeed. First, I implemented the rest of the account-
+        related functions, namely list_accounts and delete_account. Then, I did
+        the rest of the functions that we planned on doing, which mainly were the
+        ability to actually send and receive messages. While Maxwell worked on
+        using these functions to figure out the GUI version, I mostly copied over
+        code (a sin, I know) to a new file for the JSON version of the wire protocol.
+        Had I more time, I probably would have designed the codebase better with 
+        something like a flag to just check whether the user wants to use our custom
+        wire protocol or JSON, since much of the code is the same. The bulk of the 
+        work with the JSON version was just implementing a new helper function to
+        convert our standard commands built on brackets into a JSON format before
+        sending it over the wire, as well as changing all of our returned messages
+        from each messsage from strings into JSON. I finished up with making tests
+        for each of our functions. 
 
 1/12
 ___
+
+Andrew: Maxwell and I finished up some minor touches on some extra unit tests and
+        functions that we decided to implement slightly differently.
+        I tested the size of the info passed between the client and the server by
+        running some test commands and printing out the length of the strings that
+        the client sent and received. The lengths for commands for our custom protocol
+        generally hovered around lengths of 10-20 characters, aside from commands with 
+        messages (which would of course depend mostly on the length of the message 
+        itself). The messages the client received were our custom strings that we made 
+        a bit wordy for the sake of readability, so they were a bit longer, but we could
+        have easily made this system very compact by outputing things like error codes
+        instead. Conversely, the JSON commands would mostly be upwards of 40-60
+        characters, and the responses would be even longer, especially if we were
+        asking to read a message, as there are many fields in the JSON for each
+        message we send back. It's clear that in our toy examples of using our 
+        messaging service that our custom wire protocol is significantly more
+        efficient. 

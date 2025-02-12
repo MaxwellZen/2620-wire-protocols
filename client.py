@@ -16,8 +16,13 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         message = input("Enter a message to send to the server: ")
         if message == "exit":
             break 
+        print(f"c2s (pre-encode): {len(message)}")
         message = message.encode("utf-8")
+        print(f"c2s (post-encode): {len(message)}")
         s.sendall(message)
         data = s.recv(1024)
+
+        print(f"s2c (pre-decode): {len(data)}")
         data = data.decode("utf-8")
+        print(f"s2c (post-decode): {len(data)}")
         print(f"Received: {data}")

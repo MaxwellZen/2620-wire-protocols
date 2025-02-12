@@ -105,10 +105,13 @@ def test_messages():
     server.login("andrew", "password_andrew", data)
     assert(server.read(3, data) == "3 [maxwell] [4] [m4] [maxwell] [3] [m3] [maxwell] [2] [m2]")
     assert(server.read(10, data) == "5 [maxwell] [4] [m4] [maxwell] [3] [m3] [maxwell] [2] [m2] [maxwell] [1] [m1] [maxwell] [0] [m0]")
+    assert(server.num_msg(data) == "5")
     assert(server.delete_msg([1, 2], data) == "SUCCESS: messages deleted")
     assert(server.read(10, data) == "3 [maxwell] [4] [m4] [maxwell] [3] [m3] [maxwell] [0] [m0]")
+    assert(server.num_msg(data) == "3")
     assert(server.delete_msg([4], data) == "SUCCESS: messages deleted")
     assert(server.read(10, data) == "2 [maxwell] [3] [m3] [maxwell] [0] [m0]")
+    assert(server.num_msg(data) == "2")
 
     print("message tests passed")
 
@@ -134,13 +137,16 @@ def test_messages_json():
                                                                                         {"sender": "andrew", "id": "2", "message": "a2"}, \
                                                                                         {"sender": "andrew", "id": "1", "message": "a1"}, \
                                                                                         {"sender": "andrew", "id": "0", "message": "a0"}]})
+    assert(server_json.num_msg(data) == {"status": "success", "message": "5"})
     assert(server_json.delete_msg([1, 2], data) == {"status": "success", "message": "messages deleted"})
     assert(server_json.read(10, data) == {"status": "success", "count": 3, "messages": [{"sender": "andrew", "id": "4", "message": "a4"}, \
                                                                                         {"sender": "andrew", "id": "3", "message": "a3"}, \
                                                                                         {"sender": "andrew", "id": "0", "message": "a0"}]})
+    assert(server_json.num_msg(data) == {"status": "success", "message": "3"})
     assert(server_json.delete_msg([4], data) == {"status": "success", "message": "messages deleted"})
     assert(server_json.read(10, data) == {"status": "success", "count": 2, "messages": [{"sender": "andrew", "id": "3", "message": "a3"}, \
                                                                                         {"sender": "andrew", "id": "0", "message": "a0"}]})
+    assert(server_json.num_msg(data) == {"status": "success", "message": "2"})
     print("message tests json passed")
 
 if __name__ == "__main__":
