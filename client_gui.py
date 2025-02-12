@@ -5,6 +5,7 @@ from tkinter import scrolledtext
 from utils import encode_request, decode_request
 import emoji
 import sys
+import json
 
 """
 ChatApp: wrapper for the tkinter GUI. 
@@ -26,9 +27,10 @@ there to support the main loop.
 """
 
 class ChatApp:
-    def __init__(self, host, port):
+    def __init__(self, host, port, use_json):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((host, port))
+        self.use_json = use_json
         
         # general information about user
         self.username = None
@@ -187,19 +189,36 @@ class ChatApp:
 
     def setup_readmsg(self):
         # query number of messages
-        message = "num_msg".encode('utf-8')
-        self.sock.sendall(message)
-        data = self.sock.recv(1024).decode('utf-8')
-        self.num_msg = int(data)
+        if self.use_json:
+            request = {"command": "num_msg"}
+            message = json.dumps(request).encode('utf-8')
+            self.sock.sendall(message)
+            data = json.loads(self.sock.recv(1024).decode('utf-8'))
+            self.num_msg = int(data['message'])
+        else:
+            message = "num_msg".encode('utf-8')
+            self.sock.sendall(message)
+            data = self.sock.recv(1024).decode('utf-8')
+            self.num_msg = int(data)
 
         if self.num_msg == 0:
             self.readmsg_nomsg.pack()
         else:
             upper_bound = min(self.readmsg_start+4, self.num_msg)
-            message = encode_request("read", [str(upper_bound)]).encode('utf-8')
-            self.sock.sendall(message)
-            data = self.sock.recv(1024).decode('utf-8')
-            args = decode_request(data)
+
+            if self.use_json:
+                request = {"command": "read", "count": str(upper_bound)}
+                message = json.dumps(request).encode('utf-8')
+                self.sock.sendall(message)
+                data = json.loads(self.sock.recv(1024).decode('utf-8'))
+                args = [data['count']]
+                for msg in data['messages']:
+                    args.extend([msg['sender'], msg['id'], msg['message']])
+            else:
+                message = encode_request("read", [str(upper_bound)]).encode('utf-8')
+                self.sock.sendall(message)
+                data = self.sock.recv(1024).decode('utf-8')
+                args = decode_request(data)
             upper_bound = int(args[0])
             self.readmsg_showing.configure(text = f"Showing {self.readmsg_start}-{upper_bound} of {self.num_msg}:")
             self.readmsg_showing.pack()
@@ -356,11 +375,21 @@ class ChatApp:
 
     # performs login functionality
     def login_account(self):
-        message = encode_request("login", [self.username_entry.get(), self.password_entry.get()])
-        message = message.encode("utf-8")
-        self.sock.sendall(message)
-        data = self.sock.recv(1024)
-        data = data.decode("utf-8")
+        if self.use_json:
+            request = {"command": "login", "username": self.username_entry.get(), "password": self.password_entry.get()}
+            message = json.dumps(request).encode('utf-8')
+            self.sock.sendall(message)
+            data = json.loads(self.sock.recv(1024).decode('utf-8'))
+            if data['status'] == 'success':
+                data = "SUCCESS: logged in"
+            else:
+                data = data['message']
+        else:
+            message = encode_request("login", [self.username_entry.get(), self.password_entry.get()])
+            message = message.encode("utf-8")
+            self.sock.sendall(message)
+            data = self.sock.recv(1024)
+            data = data.decode("utf-8")
         if data == "SUCCESS: logged in":
             self.login_to_readmsg()
         elif data == "password is incorrect. please try again":
@@ -377,11 +406,18 @@ class ChatApp:
 
     # sends new username request to server
     def create_new_user(self):
-        message = encode_request("create_account", [self.username_entry.get()])
-        message = message.encode("utf-8")
-        self.sock.sendall(message)
-        data = self.sock.recv(1024)
-        data = data.decode("utf-8")
+        if self.use_json:
+            request = {"command": "create_account", "username": self.username_entry.get()}
+            message = json.dumps(request).encode('utf-8')
+            self.sock.sendall(message)
+            data = json.loads(self.sock.recv(1024).decode('utf-8'))
+            data = data['message']
+        else:
+            message = encode_request("create_account", [self.username_entry.get()])
+            message = message.encode("utf-8")
+            self.sock.sendall(message)
+            data = self.sock.recv(1024)
+            data = data.decode("utf-8")
         if data == "username taken. please login with your password":
             self.create_user_again_label.pack()
             self.root.update_idletasks()
@@ -394,11 +430,21 @@ class ChatApp:
 
     # sends new password request to server
     def create_new_pass(self):
-        message = encode_request("supply_pass", [self.password_entry.get()])
-        message = message.encode("utf-8")
-        self.sock.sendall(message)
-        data = self.sock.recv(1024)
-        data = data.decode("utf-8")
+        if self.use_json:
+            request = {"command": "supply_pass", "password": self.password_entry.get()}
+            message = json.dumps(request).encode('utf-8')
+            self.sock.sendall(message)
+            data = json.loads(self.sock.recv(1024).decode('utf-8'))
+            if data['status'] == 'success':
+                data = "SUCCESS: account created. please login with your new account"
+            else:
+                data = data['message']
+        else:
+            message = encode_request("supply_pass", [self.password_entry.get()])
+            message = message.encode("utf-8")
+            self.sock.sendall(message)
+            data = self.sock.recv(1024)
+            data = data.decode("utf-8")
         if data == "SUCCESS: account created. please login with your new account":
             self.create_pass_to_greeting()
             self.greeting_created_label.pack()
@@ -423,10 +469,16 @@ class ChatApp:
 
     # sends logout request to server
     def logout(self):
-        message = "logout".encode('utf-8')
-        self.sock.sendall(message)
-        data = self.sock.recv(1024)
-        data = data.decode("utf-8")
+        if self.use_json:
+            request = {"command": "logout"}
+            message = json.dumps(request).encode('utf-8')
+            self.sock.sendall(message)
+            data = json.loads(self.sock.recv(1024).decode('utf-8'))
+        else:
+            message = "logout".encode('utf-8')
+            self.sock.sendall(message)
+            data = self.sock.recv(1024)
+            data = data.decode("utf-8")
 
         self.username = None 
         self.readmsg_start = 1
@@ -439,10 +491,16 @@ class ChatApp:
 
     # sends delete_account request to server
     def deleteacct(self):
-        message = "delete_account".encode('utf-8')
-        self.sock.sendall(message)
-        data = self.sock.recv(1024)
-        data = data.decode("utf-8")
+        if self.use_json:
+            request = {"command": "delete_account"}
+            message = json.dumps(request).encode('utf-8')
+            self.sock.sendall(message)
+            data = json.loads(self.sock.recv(1024).decode('utf-8'))
+        else:
+            message = "delete_account".encode('utf-8')
+            self.sock.sendall(message)
+            data = self.sock.recv(1024)
+            data = data.decode("utf-8")
 
         self.username = None 
         self.readmsg_start = 1
@@ -455,11 +513,17 @@ class ChatApp:
 
     # sends deletemsg request to server
     def deletemsg(self, msgid):
-        message = encode_request("delete_msg", [str(msgid)])
-        message = message.encode("utf-8")
-        self.sock.sendall(message)
-        data = self.sock.recv(1024)
-        data = data.decode("utf-8")
+        if self.use_json:
+            request = {"command": "delete_msg", "ids": [str(msgid)]}
+            message = json.dumps(request).encode('utf-8')
+            self.sock.sendall(message)
+            data = json.loads(self.sock.recv(1024).decode('utf-8'))
+        else:
+            message = encode_request("delete_msg", [str(msgid)])
+            message = message.encode("utf-8")
+            self.sock.sendall(message)
+            data = self.sock.recv(1024)
+            data = data.decode("utf-8")
 
         self.num_msg -= 1
         if self.readmsg_start > 1 and self.num_msg < self.readmsg_start:
@@ -475,12 +539,19 @@ class ChatApp:
 
     # performs new search for users
     def selectuser_fill_users(self):
-        message = encode_request("list_accounts", [self.selectuser_search_entry.get() + "*"]).encode('utf-8')
-        self.sock.sendall(message)
-        data = self.sock.recv(1024)
-        data = data.decode('utf-8')
+        if self.use_json:
+            request = {"command": "list_accounts", "pattern": self.selectuser_search_entry.get() + "*"}
+            message = json.dumps(request).encode('utf-8')
+            self.sock.sendall(message)
+            data = json.loads(self.sock.recv(1024).decode('utf-8'))
+            users = [str(data['count'])] + data['accounts']
+        else:
+            message = encode_request("list_accounts", [self.selectuser_search_entry.get() + "*"]).encode('utf-8')
+            self.sock.sendall(message)
+            data = self.sock.recv(1024)
+            data = data.decode('utf-8')
+            users = decode_request(data)
 
-        users = decode_request(data)
         self.selectuser_numusers = int(users[0])
         users = users[1:]
         self.selectuser_numusers = len(users)
@@ -554,10 +625,16 @@ class ChatApp:
 
     # send message to another user
     def sendmsg(self):
-        message = encode_request("send", [self.sendmsg_user, self.sendmsg_text.get('1.0','end-1c')]).encode('utf-8')
-        self.sock.sendall(message)
-        data = self.sock.recv(1024)
-        data = data.decode("utf-8")
+        if self.use_json:
+            request = {"command": "send", "recipient": self.sendmsg_user, "message": self.sendmsg_text.get('1.0','end-1c')}
+            message = json.dumps(request).encode('utf-8')
+            self.sock.sendall(message)
+            data = json.loads(self.sock.recv(1024).decode('utf-8'))
+        else:
+            message = encode_request("send", [self.sendmsg_user, self.sendmsg_text.get('1.0','end-1c')]).encode('utf-8')
+            self.sock.sendall(message)
+            data = self.sock.recv(1024)
+            data = data.decode("utf-8")
 
         self.close_sendmsg()
         self.setup_readmsg()
@@ -572,7 +649,7 @@ def main():
     host = sys.argv[1]
     port = int(sys.argv[2])
 
-    chatapp = ChatApp(host, port)
+    chatapp = ChatApp(host, port, True)
     chatapp.main_loop()
 
 if __name__ == "__main__":

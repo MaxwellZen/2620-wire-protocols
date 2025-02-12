@@ -47,6 +47,8 @@ def login(username, password, data):
             data.username = username
             data.logged_in = True
             return {"status": "success", "message": "logged in"}
+        else:
+            return {"status": "error", "message": "password is incorrect. please try again"}
     return {"status": "error", "message": "username does not exist. please create a new account"}
 
 def list_accounts(pattern):
@@ -100,7 +102,8 @@ def delete_msg(IDs, data):
     messages = users[data.username][1]
     # updated_messages = [msg for msg in messages if msg[1] not in IDs]
     # users[data.username] = (users[data.username][0], updated_messages)
-    updated_messages = [msg for msg in messages if int(msg[1]) not in IDs]
+    updated_messages = [msg for msg in messages if msg[1] not in IDs]
+    print(IDs)
     users[data.username][1] = updated_messages
     return {"status": "success", "message": "messages deleted"}
 
@@ -158,6 +161,8 @@ def handle_command(request, data):
             return delete_account(data)
         case "logout":
             return logout(data)
+        case "num_msg":
+            return num_msg(data)
         case _:
             return {"status": "error", "message": "invalid command"}
 
