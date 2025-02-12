@@ -97,7 +97,7 @@ def read(count, data):
 def delete_msg(IDs, data):
     """
     Deletes the messages with the specified IDs. 
-    Ignores non-valid or non-existent IDs.
+    Ignores invalid or non-existent IDs.
     """
     if not data.logged_in:
         return "ERROR: not logged in"
