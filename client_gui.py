@@ -4,10 +4,7 @@ from tkinter import *
 from tkinter import scrolledtext
 from utils import encode_request, decode_request
 import emoji
-
-# don't actually do this 
-HOST = "127.0.0.1"
-PORT = 54400
+import sys
 
 """
 ChatApp: wrapper for the tkinter GUI. 
@@ -23,9 +20,9 @@ The GUI is composed of the following 7 menus:
 """
 
 class ChatApp:
-    def __init__(self):
+    def __init__(self, host, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((HOST, PORT))
+        self.sock.connect((host, port))
         
         self.username = None
         self.readmsg_start = 1
@@ -529,7 +526,15 @@ class ChatApp:
         self.root.update_idletasks()
 
 def main():
-    chatapp = ChatApp()
+    if len(sys.argv) < 3 or not sys.argv[2].isdigit():
+        print("Please provide a host and port for the socket connection")
+        print("Example: python3 client_gui.py 127.0.0.1 54400")
+        return
+
+    host = sys.argv[1]
+    port = int(sys.argv[2])
+
+    chatapp = ChatApp(host, port)
     chatapp.main_loop()
 
 if __name__ == "__main__":

@@ -3,12 +3,9 @@ import selectors
 import types
 import json
 from fnmatch import fnmatch
+import sys
 
 sel = selectors.DefaultSelector()
-
-# do not actually do this
-HOST = "127.0.0.1"
-PORT = 54400
 
 users = {}
 
@@ -146,11 +143,19 @@ def service_connection(key, mask):
             sent = sock.send(data.outb)
             data.outb = data.outb[sent:]
 
-if __name__ == "__main__":
+def main():
+    if len(sys.argv) < 3 or not sys.argv[2].isdigit():
+        print("Please provide a host and port for the socket connection")
+        print("Example: python3 client_gui.py 127.0.0.1 54400")
+        return
+
+    host = sys.argv[1]
+    port = int(sys.argv[2])
+
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    lsock.bind((HOST, PORT))
+    lsock.bind((host, port))
     lsock.listen()
-    print("Listening on", (HOST, PORT))
+    print("Listening on", (host, port))
     lsock.setblocking(False)
     sel.register(lsock, selectors.EVENT_READ, data=None)
     try:
@@ -165,3 +170,6 @@ if __name__ == "__main__":
         print("Caught keyboard interrupt, exiting")
     finally:
         sel.close()
+
+if __name__ == "__main__":
+    main()
