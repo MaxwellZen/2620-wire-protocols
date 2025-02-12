@@ -51,8 +51,11 @@ def send(recipient, message, data):
         return {"status": "error", "message": "not logged in"}
     if recipient not in users:
         return {"status": "error", "message": "recipient does not exist"}
-    id = str(len(users[recipient][1]))
-    users[recipient][1].append((data.username, id, False, message))
+    messages = users[recipient][1]
+    id = -1
+    for msg in messages:
+        id = max(id, int(msg[1]))
+    users[recipient][1].append([data.username, str(id + 1), False, message])
     return {"status": "success", "message": "message sent"}
 
 def read(count, data):
@@ -62,10 +65,6 @@ def read(count, data):
     count = min(count, len(all_messages))
     to_read = all_messages[len(all_messages) - count:]
     messages = [{"sender": sender, "id": msg_id, "message": msg} for sender, msg_id, _, msg in to_read]
-    for i in range(count):
-        sender, msg_id, _, msg = to_read[i]
-        to_read[i] = (sender, msg_id, True, msg)
-    users[data.username][1][:int(count)] = to_read
     return {"status": "success", "count": count, "messages": messages}
 
 def delete_msg(IDs, data):
