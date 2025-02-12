@@ -1,0 +1,12 @@
+1/10
+___
+
+Maxwell: Admittedly starting the project today - started with the client-server code from lecture and worked with Andrew to establish a protocol with what the client can send the server and what it should expect in return. Then the only thing I worked on today was the function to decode a request, since we came up with a custom system to put arguments in brackets while also representing brackets in text using backslashes (similar to how backslashes are normally usesd to put quotation marks in strings). 
+
+1/11
+___
+
+Maxwell: Crunch time - I left Andrew in charge of the server call-and-response type stuff and started work on the GUI. Read through the GeeksforGeeks tutorial on tkinter, then got to work. Initially I was going to make all the elements global variables but then I realized how many functions I would have to declare all the globals in, so I put everything in a class so that variables and functions can be declared in any order without it mattering. The GUI is built around 7 menus and from the second or third menu on I got more consistent in naming variables and functions after the menu they belong in, but I didn't follow that convention for the first two menus and so some of the variables are a little bit confusing (but that is what one must sacrifice when doing most of the project the day before). I wish I also had time to make the GUI look just a little bit more structured, since currently I have every element stacked top-down, but maybe I'll get to that for the Friday submission.
+
+1/12
+___
