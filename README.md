@@ -2,8 +2,9 @@
 
 # Data Structures
 users: dictionary that stores {username: [password, messages]}
+
 messages: array of arrays [user, id, msg]
-    user is the sender of the message
+- user is the sender of the message
 
 information stored on socket:
     username: string that stores what username the client is logged in to
