@@ -58,15 +58,18 @@ Andrew: Maxwell and I finished up some minor touches on some extra unit tests an
         functions that we decided to implement slightly differently.
         I tested the size of the info passed between the client and the server by
         running some test commands and printing out the length of the strings that
-        the client sent and received. The lengths for commands for our custom protocol
-        generally hovered around lengths of 10-20 characters, aside from commands with 
+        the client sent and received. The lengths of commands for our custom protocol
+        generally hovered around 10–20 characters, aside from commands with 
         messages (which would of course depend mostly on the length of the message 
         itself). The messages the client received were our custom strings that we made 
-        a bit wordy for the sake of readability, so they were a bit longer, but we could
+        a bit wordy for the sake of readability—so they were a bit longer—but we could
         have easily made this system very compact by outputing things like error codes
-        instead. Conversely, the JSON commands would mostly be upwards of 40-60
+        instead. Conversely, the JSON commands were mostly upwards of 40-60
         characters, and the responses would be even longer, especially if we were
         asking to read a message, as there are many fields in the JSON for each
         message we send back. It's clear that in our toy examples of using our 
-        messaging service that our custom wire protocol is significantly more
-        efficient. 
+        messaging service that our custom wire protocol is significantly more 
+        efficient, character-wise. However, if we wanted to scale this into a commonly 
+        used service, JSON would make much more sense, since JSON is something that 
+        most people can easily use, whereas our custom protocol is more efficient 
+        but relatively arcane and requires a custom function to encode/decode. 
