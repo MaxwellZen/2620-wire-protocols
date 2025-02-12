@@ -94,6 +94,11 @@ def logout(data):
     data.logged_in = False
     return "SUCCESS: logged out"
 
+def num_msg(data):
+    if not data.logged_in:
+        return "ERROR: not logged in"
+    return str(len(users[data.username][1]))
+
 def handle_command(request, data):
     request = decode_request(request)
     command = request[0]
@@ -123,6 +128,8 @@ def handle_command(request, data):
             return delete_account(data)
         case "logout":
             return logout(data)
+        case "num_msg":
+            return num_msg(data)
         case _:
             return "ERROR: invalid command"
 

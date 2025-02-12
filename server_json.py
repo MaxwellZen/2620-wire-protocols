@@ -58,10 +58,11 @@ def send(recipient, message, data):
 def read(count, data):
     if not data.logged_in:
         return {"status": "error", "message": "not logged in"}
-    count = min(count, len(users[data.username][1]))
-    to_read = users[data.username][1][:int(count)]
+    all_messages = users[data.username][1]
+    count = min(count, len(all_messages))
+    to_read = all_messages[len(all_messages) - count:]
     messages = [{"sender": sender, "id": msg_id, "message": msg} for sender, msg_id, _, msg in to_read]
-    for i in range(len(to_read)):
+    for i in range(count):
         sender, msg_id, _, msg = to_read[i]
         to_read[i] = (sender, msg_id, True, msg)
     users[data.username][1][:int(count)] = to_read
