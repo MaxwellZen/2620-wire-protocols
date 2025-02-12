@@ -19,7 +19,7 @@ Examples:
 - create_account [andrew]
 - send [maxwell] [hello!]
 
-Handled by encode_request and decode_request (and encode_json for JSON). If brackets or backslashes are in the text, they get replaced by "\[" or "\\"
+Handled by encode_request and decode_request (and encode_json for JSON). If brackets or backslashes are in the text, they get replaced by "\\\[" or "\\\\"
 
 # Commands
 
