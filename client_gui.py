@@ -17,6 +17,12 @@ The GUI is composed of the following 7 menus:
 - readmsg: displays emails for logged-in user
 - selectuser: allows user to select another user to send an email to
 - sendmsg: prompts user to write an email
+
+Most of the variables and functions are named after their relevant menu, but 
+that might not be true for some of the earlier variables
+
+Relevant usage is displayed in main method below - all other functions are only
+there to support the main loop.
 """
 
 class ChatApp:
@@ -24,20 +30,24 @@ class ChatApp:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((host, port))
         
+        # general information about user
         self.username = None
         self.readmsg_start = 1
         self.num_msg = 0
         self.reading_msg = False
 
+        # root node
         self.root = Tk()
         self.root.title("Email.com")
         self.root.geometry('450x500')
 
+        # greeting menu
         self.greeting_label = Label(text = "Welcome to email.com")
         self.login_menu_button = Button(self.root, text = "Login", command=self.greeting_to_login)
         self.register_menu_button = Button(self.root, text = "Create Account", command=self.greeting_to_create_user)
         self.greeting_created_label = Label(text = "Account created; please log in with your new account", fg='green')
 
+        # login menu
         self.username_label = Label(text = "Username:")
         self.password_label = Label(text = "Password:")
         self.username_entry = Entry(self.root, width=20)
@@ -47,15 +57,18 @@ class ChatApp:
         self.login_menu_not_user = Label(text = "Username does not exist; please create a new account", fg = 'red')
         self.login_menu_wrong_pass = Label(text = "Password is incorrect; please try again", fg = 'red')
 
+        # create_user menu
         self.create_user_label = Label(text = "Input Your New Username:")
         self.create_user_create_button = Button(self.root, text = "Create Username", command = self.create_new_user)
         self.create_user_back_button = Button(self.root, text = "Back to Menu", command=self.create_user_to_greeting)
         self.create_user_again_label = Label(self.root, text = "Username taken; please log in or choose another username", fg='red')
 
+        # create_pass menu
         self.create_pass_label = Label(text = "Input Your New Password:")
         self.create_pass_create_button = Button(self.root, text = "Create Password", command = self.create_new_pass)
         self.create_pass_back_button = Button(self.root, text = "Back to Menu", command=self.create_pass_to_greeting)
 
+        # readmsg menu
         self.readmsg_senders = []
         self.readmsg_texts = []
         self.readmsg_ids = []
@@ -68,6 +81,7 @@ class ChatApp:
         self.readmsg_logout_button = Button(self.root, text = "Log Out", command=self.logout)
         self.readmsg_deleteacct_button = Button(self.root, text = "Delete Account", command=self.deleteacct)
 
+        # selectuser menu
         self.selectuser_search_entry = Entry(self.root, width=20)
         self.selectuser_search_button = Button(self.root, text = "Search", command = self.selectuser_search)
         self.selectuser_start = 1
@@ -80,17 +94,20 @@ class ChatApp:
         self.selectuser_sendbuttons = []
         self.selectuser_backbutton = Button(self.root, text = "Back", command = self.selectuser_to_readmsg)
 
+        # sendmsg menu
         self.sendmsg_user = None
         self.sendmsg_compose_label = Label(text = "")
         self.sendmsg_text = scrolledtext.ScrolledText(self.root, wrap=tk.WORD, width=40, height=8)
         self.sendmsg_sendbutton = Button(self.root, text = "Send Email", command = self.sendmsg)
         self.sendmsg_backbutton = Button(self.root, text = "Back", command = self.sendmsg_to_readmsg)
 
+    # sets up greeting page and kicks off main loop
     def main_loop(self):
         self.setup_greeting()
         self.readmsg_update()
         self.root.mainloop()
 
+    # updates messages once per second if the window is currently on the readmsg menu
     def readmsg_update(self):
         if self.reading_msg:
             self.close_readmsg()
@@ -98,6 +115,12 @@ class ChatApp:
             self.root.update_idletasks()
         self.root.after(1000, self.readmsg_update)
 
+    """
+    All of these functions serve the same core roles, which are described here (instead of one-by-one):
+    setup_[menu]: sets up the elements for [menu] (ie packing elements into window)
+    close_[menu]: hides all elements for [menu]
+    [menu1]_to_[menu2]: wrapper function for the transition from [menu1] to [menu2] (close menu1, setup menu2, update window)
+    """
     def setup_login(self):
         self.username_label.pack()
         self.username_entry.pack()
@@ -331,6 +354,7 @@ class ChatApp:
         self.setup_readmsg()
         self.root.update_idletasks()
 
+    # performs login functionality
     def login_account(self):
         message = encode_request("login", [self.username_entry.get(), self.password_entry.get()])
         message = message.encode("utf-8")
@@ -351,6 +375,7 @@ class ChatApp:
             print(data)
             self.root.destroy()
 
+    # sends new username request to server
     def create_new_user(self):
         message = encode_request("create_account", [self.username_entry.get()])
         message = message.encode("utf-8")
@@ -367,6 +392,7 @@ class ChatApp:
             print(data)
             self.root.destroy()
 
+    # sends new password request to server
     def create_new_pass(self):
         message = encode_request("supply_pass", [self.password_entry.get()])
         message = message.encode("utf-8")
@@ -381,18 +407,21 @@ class ChatApp:
             print(data)
             self.root.destroy()
 
+    # changes which emails are being viewed (goes from n+5 to n)
     def readmsg_scroll_left(self):
         self.readmsg_start -= 5
         self.close_readmsg()
         self.setup_readmsg()
         self.root.update_idletasks()
 
+    # changes which emails are being viewed (goes from n to n+5)
     def readmsg_scroll_right(self):
         self.readmsg_start += 5
         self.close_readmsg()
         self.setup_readmsg()
         self.root.update_idletasks()
 
+    # sends logout request to server
     def logout(self):
         message = "logout".encode('utf-8')
         self.sock.sendall(message)
@@ -408,6 +437,7 @@ class ChatApp:
         self.setup_greeting()
         self.root.update_idletasks()
 
+    # sends delete_account request to server
     def deleteacct(self):
         message = "delete_account".encode('utf-8')
         self.sock.sendall(message)
@@ -423,6 +453,7 @@ class ChatApp:
         self.setup_greeting()
         self.root.update_idletasks()
 
+    # sends deletemsg request to server
     def deletemsg(self, msgid):
         message = encode_request("delete_msg", [str(msgid)])
         message = message.encode("utf-8")
@@ -438,9 +469,11 @@ class ChatApp:
         self.setup_readmsg()
         self.root.update_idletasks()
 
+    # wrapper function: produces lambda function to attach to delete button command
     def deletemsg_wrapper(self, msgid):
         return lambda : self.deletemsg(msgid)
 
+    # performs new search for users
     def selectuser_fill_users(self):
         message = encode_request("list_accounts", [self.selectuser_search_entry.get() + "*"]).encode('utf-8')
         self.sock.sendall(message)
@@ -466,6 +499,7 @@ class ChatApp:
             self.selectuser_users.append(user_label)
             self.selectuser_sendbuttons.append(user_button)
 
+    # updates the user view (for example, when iterating through users)
     def selectuser_view_users(self):
         self.selectuser_backbutton.pack_forget()
         
@@ -490,11 +524,13 @@ class ChatApp:
             
             self.selectuser_backbutton.pack()
 
+    # wrapper function to search for users then view users
     def selectuser_search(self):
         self.selectuser_fill_users()
         self.selectuser_view_users()
         self.root.update_idletasks()
 
+    # iterate through users (n+5 to n)
     def selectuser_scroll_left(self):
         for i in range(self.selectuser_start - 1, self.selectuser_end):
             self.selectuser_users[i].pack_forget()
@@ -505,6 +541,7 @@ class ChatApp:
         self.selectuser_view_users()
         self.root.update_idletasks()
 
+    # iterate through users (n to n+5)
     def selectuser_scroll_right(self):
         for i in range(self.selectuser_start - 1, self.selectuser_end):
             self.selectuser_users[i].pack_forget()
@@ -515,6 +552,7 @@ class ChatApp:
         self.selectuser_view_users()
         self.root.update_idletasks()
 
+    # send message to another user
     def sendmsg(self):
         message = encode_request("send", [self.sendmsg_user, self.sendmsg_text.get('1.0','end-1c')]).encode('utf-8')
         self.sock.sendall(message)
