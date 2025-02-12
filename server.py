@@ -16,36 +16,35 @@ def create_account(username, data):
     if data.logged_in:
         return f"ERROR: already logged into account {data.username}"
     if username in users:
-        return "Username taken. Please login with your password"
+        return "username taken. please login with your password"
     else:
         data.username = username
         data.supplying_pass = True
-        return "Enter password to create new account"
+        return "enter password to create new account"
 
 def supply_pass(password, data):
     if data.logged_in:
-        return f"ERROR: already logged in to account {data.username}"
+        return f"ERROR: already logged into account {data.username}"
     if data.supplying_pass:
-        users.update({data.username: [password, []]})
+        users.update({data.username: (hash(password), [])})
         data.supplying_pass = False
-        return "SUCCESS: account created. Please login with your new account"
+        return "SUCCESS: account created. please login with your new account"
     return "ERROR: should not be supplying password"
 
 def login(username, password, data):
     if data.logged_in:
-        return f"ERROR: already logged in to account {data.username}"
+        return f"ERROR: already logged into account {data.username}"
     if username in users:
-        if (password == users[username][0]):
+        if (hash(password) == users[username][0]):
             data.username = username
             data.logged_in = True
             return "SUCCESS: logged in"
         else:
-            return "Password is incorrect. Please try again"
-    return "Username does not exist. Please create a new account"
+            return "password is incorrect. please try again"
+    return "username does not exist. please create a new account"
 
 def list_accounts(pattern):
     accounts = [user for user in users if fnmatch(user, pattern)]
-    # TODO (when GUI is made) If there are more accounts than can comfortably be displayed, allow iterating through the accounts.
     count = len(accounts)
     return f"{count} " + " ".join(accounts)
 
@@ -54,9 +53,11 @@ def send(recipient, message, data):
         return "ERROR: not logged in"
     if recipient not in users:
         return "ERROR: recipient does not exist"
-    # TODO temp solution: theoretically ID's are in order, would get messed up if processed in wrong order
-    id = str(len(users[recipient][1]))
-    users[recipient][1].append([data.username, id, False, message])
+    messages = users[recipient][1]
+    id = -1
+    for msg in messages:
+        id = max(id, int(msg[1]))
+    users[recipient][1].append([data.username, str(id + 1), False, message])
     return "SUCCESS: message sent"
 
 def read(count, data):
@@ -76,13 +77,14 @@ def delete_msg(IDs, data):
     if not data.logged_in:
         return "ERROR: not logged in"
     messages = users[data.username][1]
-    users[data.username][1] = [msg for msg in messages if msg[1] not in IDs]
+    updated_messages = [msg for msg in messages if msg[1] not in IDs]
+    users[data.username] = (users[data.username][0], updated_messages)
     return "SUCCESS: messages deleted"
 
 def delete_account(data):
     if not data.logged_in:
         return "ERROR: not logged in"
-    users.pop(data.username)    # no need to delete the msgs for the user bc everything gets deleted anyways?
+    users.pop(data.username)
     data.username = None
     data.logged_in = False
     return "SUCCESS: account deleted"
@@ -125,7 +127,7 @@ def handle_command(request, data):
         case "read":
             return read(int(request[1]), data)
         case "delete_msg":
-            return delete_msg(request[1], data)
+            return delete_msg(list(map(int, request[1].split(" "))), data)
         case "delete_account":
             return delete_account(data)
         case "logout":

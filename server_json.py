@@ -14,32 +14,32 @@ users = {}
 
 def create_account(username, data):
     if data.logged_in:
-        return {"status": "error", "message": f"Already logged into account {data.username}"}
+        return {"status": "error", "message": f"already logged into account {data.username}"}
     if username in users:
-        return {"status": "error", "message": "Username taken. Please login with your password"}
+        return {"status": "error", "message": "username taken. please login with your password"}
     else:
         data.username = username
         data.supplying_pass = True
-        return {"status": "success", "message": "Enter password to create new account"}
+        return {"status": "success", "message": "enter password to create new account"}
 
 def supply_pass(password, data):
     if data.logged_in:
-        return {"status": "error", "message": f"already logged in to account {data.username}"}
+        return {"status": "error", "message": f"already logged into account {data.username}"}
     if data.supplying_pass:
-        users.update({data.username: (password, [])})
+        users.update({data.username: (hash(password), [])})
         data.supplying_pass = False
-        return {"status": "success", "message": "Account created. Please login with your new account"}
+        return {"status": "success", "message": "account created. please login with your new account"}
     return {"status": "error", "message": "should not be supplying password"}
 
 def login(username, password, data):
     if data.logged_in:
-        return {"status": "error", "message": f"already logged in to account {data.username}"}
+        return {"status": "error", "message": f"already logged into account {data.username}"}
     if username in users:
-        if password == users[username][0]:
+        if hash(password) == users[username][0]:
             data.username = username
             data.logged_in = True
             return {"status": "success", "message": "logged in"}
-    return {"status": "error", "message": "Username does not exist. Please create a new account"}
+    return {"status": "error", "message": "username does not exist. please create a new account"}
 
 def list_accounts(pattern):
     accounts = [user for user in users if fnmatch(user, pattern)]
@@ -51,8 +51,11 @@ def send(recipient, message, data):
         return {"status": "error", "message": "not logged in"}
     if recipient not in users:
         return {"status": "error", "message": "recipient does not exist"}
-    id = str(len(users[recipient][1]))
-    users[recipient][1].append((data.username, id, False, message))
+    messages = users[recipient][1]
+    id = -1
+    for msg in messages:
+        id = max(id, int(msg[1]))
+    users[recipient][1].append([data.username, str(id + 1), False, message])
     return {"status": "success", "message": "message sent"}
 
 def read(count, data):
@@ -62,17 +65,14 @@ def read(count, data):
     count = min(count, len(all_messages))
     to_read = all_messages[len(all_messages) - count:]
     messages = [{"sender": sender, "id": msg_id, "message": msg} for sender, msg_id, _, msg in to_read]
-    for i in range(count):
-        sender, msg_id, _, msg = to_read[i]
-        to_read[i] = (sender, msg_id, True, msg)
-    users[data.username][1][:int(count)] = to_read
     return {"status": "success", "count": count, "messages": messages}
 
 def delete_msg(IDs, data):
     if not data.logged_in:
         return {"status": "error", "message": "not logged in"}
     messages = users[data.username][1]
-    users[data.username][1] = [msg for msg in messages if msg[1] not in IDs]
+    updated_messages = [msg for msg in messages if msg[1] not in IDs]
+    users[data.username] = (users[data.username][0], updated_messages)
     return {"status": "success", "message": "messages deleted"}
 
 def delete_account(data):
@@ -118,7 +118,7 @@ def handle_command(request, data):
         case "logout":
             return logout(data)
         case _:
-            return {"status": "error", "message": "Invalid command"}
+            return {"status": "error", "message": "invalid command"}
 
 def accept_wrapper(sock):
     conn, addr = sock.accept()
