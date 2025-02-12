@@ -12,6 +12,10 @@ def encode_request(command, args):
 
 def decode_request(request):
     ind = request.find(' ')
+    
+    if ind == -1:
+        return [request]
+    
     command = request[:ind]
     request = request[ind+1:]
     args = [command]

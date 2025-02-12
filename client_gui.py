@@ -15,9 +15,9 @@ menus:
 - login
 - create_user
 - create_pass
-- read_msg
-- select_user
-- send_msg
+- readmsg
+- selectuser
+- sendmsg
 """
 
 class ChatApp:
@@ -26,6 +26,9 @@ class ChatApp:
         self.sock.connect((HOST, PORT))
         
         self.username = None
+        self.readmsg_start = 1
+        self.num_msg = 0
+        self.reading_msg = False
 
         self.root = Tk()
         self.root.title("Email.com")
@@ -54,16 +57,28 @@ class ChatApp:
         self.create_pass_create_button = Button(self.root, text = "Create Password", command = self.create_new_pass)
         self.create_pass_back_button = Button(self.root, text = "Back to Menu", command=self.create_pass_to_greeting)
 
-        self.reading_msg = False
+        self.readmsg_senders = []
+        self.readmsg_texts = []
+        self.readmsg_ids = []
+        self.readmsg_deletes = []
+        self.readmsg_nomsg = Label(text = "No messages to show (that's tough)")
+        self.readmsg_showing = Label(text = "")
+        self.readmsg_leftbutton = Button(self.root, text = "<", command=self.readmsg_scroll_left)
+        self.readmsg_rightbutton = Button(self.root, text = ">", command=self.readmsg_scroll_right)
+        self.readmsg_send_button = Button(self.root, text = "Send Message", command=self.readmsg_to_selectuser)
+        self.readmsg_logout_button = Button(self.root, text = "Log Out", command=self.logout)
+        self.readmsg_deleteacct_button = Button(self.root, text = "Delete Account", command=self.deleteacct)
 
     def main_loop(self):
-        self.greeting_label.pack()
-        self.register_menu_button.pack()
-        self.login_menu_button.pack()
-
+        self.setup_greeting()
+        self.readmsg_update()
         self.root.mainloop()
 
     def readmsg_update(self):
+        if self.reading_msg:
+            self.close_readmsg()
+            self.setup_readmsg()
+            self.root.update_idletasks()
         self.root.after(1000, self.readmsg_update)
 
     def setup_login(self):
@@ -130,6 +145,74 @@ class ChatApp:
         self.create_pass_create_button.pack_forget()
         self.create_pass_back_button.pack_forget()
 
+    def setup_readmsg(self):
+        # query number of messages
+        message = "num_msg".encode('utf-8')
+        self.sock.sendall(message)
+        data = self.sock.recv(1024).decode('utf-8')
+        self.num_msg = int(data)
+
+        if self.num_msg == 0:
+            self.readmsg_nomsg.pack()
+        else:
+            upper_bound = min(self.readmsg_start+4, self.num_msg)
+            message = encode_request("read", [str(upper_bound)]).encode('utf-8')
+            self.sock.sendall(message)
+            data = self.sock.recv(1024).decode('utf-8')
+            args = decode_request(data)
+            upper_bound = int(args[0])
+            self.readmsg_showing.configure(text = f"Showing {self.readmsg_start}-{upper_bound} of {self.num_msg}:")
+            self.readmsg_showing.pack()
+            if self.readmsg_start == 1:
+                self.readmsg_leftbutton.configure(state='disabled')
+            self.readmsg_leftbutton.pack()
+            if upper_bound == self.num_msg:
+                self.readmsg_rightbutton.configure(state='disabled')
+            self.readmsg_rightbutton.pack()
+
+            # num_showing = upper_bound - self.readmsg_start + 1
+            for i in range(self.readmsg_start - 1, upper_bound):
+                index = 1 + 3*i
+                cur_sender = Label(text = args[index])
+                cur_text = Label(text = args[index+2])
+                cur_delete = Button(self.root, text = "Delete Message", command = lambda : self.deletemsg(int(args[index+1])))
+
+                cur_sender.pack()
+                cur_text.pack()
+                cur_delete.pack()
+
+                self.readmsg_senders.append(cur_sender)
+                self.readmsg_texts.append(cur_text)
+                self.readmsg_deletes.append(cur_delete)
+                self.readmsg_ids.append(int(args[index+1]))
+            
+        self.readmsg_send_button.pack()
+        self.readmsg_logout_button.pack()
+        self.readmsg_deleteacct_button.pack()
+        self.reading_msg = True
+
+    def close_readmsg(self):
+        self.readmsg_nomsg.pack_forget()
+        self.readmsg_showing.pack_forget()
+        self.readmsg_leftbutton.pack_forget()
+        self.readmsg_leftbutton.configure(state='normal')
+        self.readmsg_rightbutton.pack_forget()
+        self.readmsg_rightbutton.configure(state='normal')
+
+        for sender in self.readmsg_senders: sender.pack_forget()
+        for text in self.readmsg_texts: text.pack_forget()
+        for delete in self.readmsg_deletes: delete.pack_forget()
+
+        self.readmsg_send_button.pack_forget()
+        self.readmsg_logout_button.pack_forget()
+        self.readmsg_deleteacct_button.pack_forget()
+
+        self.readmsg_senders = []
+        self.readmsg_texts = []
+        self.readmsg_deletes = []
+        self.readmsg_ids = []
+
+
     def greeting_to_login(self):
         self.close_greeting()
         self.setup_login()
@@ -160,6 +243,14 @@ class ChatApp:
         self.setup_create_pass()
         self.root.update_idletasks()
 
+    def login_to_readmsg(self):
+        self.close_login()
+        self.setup_readmsg()
+        self.root.update_idletasks()
+
+    def readmsg_to_selectuser(self):
+        pass
+
     def login_account(self):
         message = encode_request("login", [self.username_entry.get(), self.password_entry.get()])
         message = message.encode("utf-8")
@@ -167,7 +258,7 @@ class ChatApp:
         data = self.sock.recv(1024)
         data = data.decode("utf-8")
         if data == "SUCCESS: logged in":
-            pass
+            self.login_to_readmsg()
         elif data == "Password is incorrect. Please try again":
             self.reset_login()
             self.login_menu_wrong_pass.pack()
@@ -209,6 +300,27 @@ class ChatApp:
         else:
             print(data)
             self.root.destroy()
+
+    def readmsg_scroll_left(self):
+        self.readmsg_start -= 5
+        self.close_readmsg()
+        self.setup_readmsg()
+        self.root.update_idletasks()
+
+    def readmsg_scroll_right(self):
+        self.readmsg_start += 5
+        self.close_readmsg()
+        self.setup_readmsg()
+        self.root.update_idletasks()
+
+    def logout(self):
+        pass
+
+    def deleteacct(self):
+        pass
+
+    def deletemsg(self, msgid):
+        pass
 
 def main():
     chatapp = ChatApp()
