@@ -26,7 +26,7 @@ def supply_pass(password, data):
     if data.logged_in:
         return {"status": "error", "message": f"already logged into account {data.username}"}
     if data.supplying_pass:
-        users.update({data.username: (hash(password), [])})
+        users.update({data.username: [hash(password), []]})
         data.supplying_pass = False
         return {"status": "success", "message": "account created. please login with your new account"}
     return {"status": "error", "message": "should not be supplying password"}
@@ -64,15 +64,21 @@ def read(count, data):
     all_messages = users[data.username][1]
     count = min(count, len(all_messages))
     to_read = all_messages[len(all_messages) - count:]
+    # for sender, msg_id, _, msg in to_read[::-1]:
+    #     messages.extend([sender, msg_id, msg])
     messages = [{"sender": sender, "id": msg_id, "message": msg} for sender, msg_id, _, msg in to_read]
-    return {"status": "success", "count": count, "messages": messages}
+    for i in range(count):
+        users[data.username][1][len(all_messages) - count + i][2] = True
+    return {"status": "success", "count": count, "messages": list(reversed(messages))}
 
 def delete_msg(IDs, data):
     if not data.logged_in:
         return {"status": "error", "message": "not logged in"}
     messages = users[data.username][1]
-    updated_messages = [msg for msg in messages if msg[1] not in IDs]
-    users[data.username] = (users[data.username][0], updated_messages)
+    # updated_messages = [msg for msg in messages if msg[1] not in IDs]
+    # users[data.username] = (users[data.username][0], updated_messages)
+    updated_messages = [msg for msg in messages if int(msg[1]) not in IDs]
+    users[data.username][1] = updated_messages
     return {"status": "success", "message": "messages deleted"}
 
 def delete_account(data):
