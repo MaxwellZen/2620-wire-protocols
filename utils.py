@@ -1,5 +1,8 @@
 
 def encode_request(command, args):
+    """
+    Encodes array of arguments into a standard command.
+    """
     request = command
     for arg in args:
         arg2 = ""
@@ -11,6 +14,9 @@ def encode_request(command, args):
     return request
 
 def decode_request(request):
+    """
+    Decodes standard command into an array of arguments.
+    """
     ind = request.find(' ')
 
     if ind == -1:
@@ -37,6 +43,9 @@ def decode_request(request):
     return args
 
 def encode_json(input):
+    """
+    Encodes standard command into json format.
+    """
     args = decode_request(input)
     command = args[0]
     request = {"command": command}
@@ -53,7 +62,7 @@ def encode_json(input):
         case "send":
             request["recipient"] = args[1]
             request["message"] = " ".join(args[2:])
-        case "read":
+        case "read" | "num_msg":
             request["count"] = int(args[1])
         case "delete_msg":
             request["ids"] = args[1:]

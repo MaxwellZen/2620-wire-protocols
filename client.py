@@ -1,6 +1,7 @@
 import socket 
 import sys
 
+# grabs host and port from command-line arguments
 if len(sys.argv) < 3 or not sys.argv[2].isdigit():
     print("Please provide a host and port for the socket connection")
     print("Example: python3 client_gui.py 127.0.0.1 54400")

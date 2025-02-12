@@ -3,6 +3,7 @@ import json
 from utils import encode_json
 import sys
 
+# grabs host and port from command-line arguments
 if len(sys.argv) < 3 or not sys.argv[2].isdigit():
     print("Please provide a host and port for the socket connection")
     print("Example: python3 client_gui.py 127.0.0.1 54400")
@@ -17,10 +18,13 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         message = input("Enter a message to send to the server: ")
         if message == "exit":
             break 
+        # encodes standard command into json format
         json_request = encode_json(message)
+        # encodes json format into string to be sent along the wiree
         json_str = json.dumps(json_request)
         s.sendall(json_str.encode("utf-8"))
         
+        # receives json string and converts back into json
         data = s.recv(1024)
         data = data.decode("utf-8")
         print(f"Received: {data}")
