@@ -19,15 +19,16 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         if message == "exit":
             break 
         # encodes standard command into json format
-        json_request = encode_json(message)
+        try: 
+            json_request = encode_json(message)
+        except:
+            print("ERROR: invalid command")
+            continue
         # encodes json format into string to be sent along the wire
         json_str = json.dumps(json_request)
-        print(f"c2s (pre-encode): {len(json_str)}")
         s.sendall(json_str.encode("utf-8"))
-        print(f"c2s (post-encode): {len(json_str)}")
+        
         # receives json string and converts back into json
         data = s.recv(1024)
-        print(f"s2c (pre-decode): {len(data)}")
         data = data.decode("utf-8")
-        print(f"s2c (post-decode): {len(data)}")
         print(f"Received: {data}")

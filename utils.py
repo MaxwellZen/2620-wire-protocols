@@ -69,7 +69,7 @@ def encode_json(input):
         case "delete_account" | "logout":
             pass
         case _:
-            raise Exception("ERROR: Invalid command")
+            raise Exception("ERROR: invalid command")
     return request
 
 def test_encode_request():

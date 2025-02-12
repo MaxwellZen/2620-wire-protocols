@@ -147,23 +147,36 @@ def handle_command(request, data):
         case "create_account":
             try:
                 return create_account(request[1], data)
-            except IndexError:
-                return "usage: create_account [username]"
             except:
-                return "ERROR: create_account"
+                return "usage: create_account [username]"
         case "supply_pass":
-            return supply_pass(request[1], data)
+            try:
+                return supply_pass(request[1], data)
+            except:
+                return "usage: supply_pass [password]"
         case "login":
-            return login(request[1], request[2], data)
+            try:
+                return login(request[1], request[2], data)
+            except:
+                return "usage: login [username] [password]"
         case "list_accounts":
             pattern = request[1] if len(request) > 1 else "*"
             return list_accounts(pattern)
         case "send":
-            return send(request[1], request[2], data)
+            try:
+                return send(request[1], request[2], data)
+            except:
+                return "usage: send [recipient] [message]"
         case "read":
-            return read(int(request[1]), data)
+            try:
+                return read(int(request[1]), data)
+            except:
+                return "usage: read [n]"
         case "delete_msg":
-            return delete_msg(list(map(int, request[1].split(" "))), data)
+            try:
+                return delete_msg(list(map(int, request[1].split(" "))), data)
+            except:
+                return "usage: delete_msg [i j k]"
         case "delete_account":
             return delete_account(data)
         case "logout":
