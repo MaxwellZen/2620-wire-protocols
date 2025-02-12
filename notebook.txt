@@ -70,3 +70,13 @@ Andrew: Maxwell and I finished up some minor touches on some extra unit tests an
         message we send back. It's clear that in our toy examples of using our 
         messaging service that our custom wire protocol is significantly more
         efficient. 
+
+Maxwell: Building on the previous notes on efficiency, the implication is that if this 
+        existed at a much larger scale for internal usage only, the custom representations
+        would be advantageous (and could be made even more efficient with the use of error 
+        codes). However, if this were to be implemented as a public-facing API for general 
+        use, the JSON representation would be better because even though it takes up more 
+        space, it is easier to document and easier for the general public to work with. So 
+        the two methods have their tradeoffs, but luckily the chat application does not have 
+        to be scaleable or public-facing for the purpose of this assignment, so there is no 
+        reason to pick one over the other beyond convenience.
