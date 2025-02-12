@@ -90,6 +90,11 @@ def logout(data):
     data.logged_in = False
     return {"status": "success", "message": "logged out"}
 
+def num_msg(data):
+    if not data.logged_in:
+        return "ERROR: not logged in"
+    return {"status": "success", "message": str(len(users[data.username][1]))}
+
 def handle_command(request, data):
     command = request.get("command")
     match command:
