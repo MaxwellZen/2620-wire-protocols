@@ -26,7 +26,7 @@ def supply_pass(password, data):
     if data.logged_in:
         return f"ERROR: already logged into account {data.username}"
     if data.supplying_pass:
-        users.update({data.username: (password, [])})
+        users.update({data.username: (hash(password), [])})
         data.supplying_pass = False
         return "SUCCESS: account created. please login with your new account"
     return "ERROR: should not be supplying password"
@@ -35,7 +35,7 @@ def login(username, password, data):
     if data.logged_in:
         return f"ERROR: already logged into account {data.username}"
     if username in users:
-        if (password == users[username][0]):
+        if (hash(password) == users[username][0]):
             data.username = username
             data.logged_in = True
             return "SUCCESS: logged in"
