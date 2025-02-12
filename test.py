@@ -61,15 +61,15 @@ def test_accounts():
     server.supply_pass("password_andrew", data)
     server.create_account("johnathan", data)
     server.supply_pass("password_johnathan", data)
-    assert(server.list_accounts("*") == "3 maxwell andrew johnathan")
-    assert(server.list_accounts("*an*") == "2 andrew johnathan")
+    assert(server.list_accounts("*") == "3 [maxwell] [andrew] [johnathan]")
+    assert(server.list_accounts("*an*") == "2 [andrew] [johnathan]")
 
     server.login("johnathan", "password_johnathan", data)
     assert(server.delete_account(data) == "SUCCESS: account deleted")
     assert(data.username == None)
     assert(data.logged_in == False)
     assert(server.delete_account(data) == "ERROR: not logged in")
-    assert(server.list_accounts("*") == "2 maxwell andrew")
+    assert(server.list_accounts("*") == "2 [maxwell] [andrew]")
 
     print("account tests passed")
 

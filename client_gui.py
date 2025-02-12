@@ -1,23 +1,25 @@
 import socket 
+import tkinter as tk
 from tkinter import *
+from tkinter import scrolledtext
 from utils import encode_request, decode_request
+import emoji
 
 # don't actually do this 
 HOST = "127.0.0.1"
 PORT = 54400
 
 """
-menus:
-- greeting
-    - greeting_label
-    - login_menu_button
-    - register_menu_button
-- login
-- create_user
-- create_pass
-- readmsg
-- selectuser
-- sendmsg
+ChatApp: wrapper for the tkinter GUI. 
+
+The GUI is composed of the following 7 menus:
+- greeting: offers option to create new account or login
+- login: prompts user for username and password
+- create_user: prompts user for new username
+- create_pass: prompts user for new password
+- readmsg: displays emails for logged-in user
+- selectuser: allows user to select another user to send an email to
+- sendmsg: prompts user to write an email
 """
 
 class ChatApp:
@@ -68,6 +70,24 @@ class ChatApp:
         self.readmsg_send_button = Button(self.root, text = "Send Message", command=self.readmsg_to_selectuser)
         self.readmsg_logout_button = Button(self.root, text = "Log Out", command=self.logout)
         self.readmsg_deleteacct_button = Button(self.root, text = "Delete Account", command=self.deleteacct)
+
+        self.selectuser_search_entry = Entry(self.root, width=20)
+        self.selectuser_search_button = Button(self.root, text = "Search", command = self.selectuser_search)
+        self.selectuser_start = 1
+        self.selectuser_end = 0
+        self.selectuser_showing = Label(text = "")
+        self.selectuser_leftbutton = Button(self.root, text = "<", command=self.selectuser_scroll_left)
+        self.selectuser_rightbutton = Button(self.root, text = ">", command = self.selectuser_scroll_right)
+        self.selectuser_numusers = 0
+        self.selectuser_users = []
+        self.selectuser_sendbuttons = []
+        self.selectuser_backbutton = Button(self.root, text = "Back", command = self.selectuser_to_readmsg)
+
+        self.sendmsg_user = None
+        self.sendmsg_compose_label = Label(text = "")
+        self.sendmsg_text = scrolledtext.ScrolledText(self.root, wrap=tk.WORD, width=40, height=8)
+        self.sendmsg_sendbutton = Button(self.root, text = "Send Email", command = self.sendmsg)
+        self.sendmsg_backbutton = Button(self.root, text = "Back", command = self.sendmsg_to_readmsg)
 
     def main_loop(self):
         self.setup_greeting()
@@ -175,7 +195,7 @@ class ChatApp:
                 index = 1 + 3*i
                 cur_sender = Label(text = args[index])
                 cur_text = Label(text = args[index+2])
-                cur_delete = Button(self.root, text = "Delete Message", command = lambda : self.deletemsg(int(args[index+1])))
+                cur_delete = Button(self.root, text = emoji.emojize(":wastebasket:"), command = self.deletemsg_wrapper(int(args[index+1])))
 
                 cur_sender.pack()
                 cur_text.pack()
@@ -199,9 +219,9 @@ class ChatApp:
         self.readmsg_rightbutton.pack_forget()
         self.readmsg_rightbutton.configure(state='normal')
 
-        for sender in self.readmsg_senders: sender.pack_forget()
-        for text in self.readmsg_texts: text.pack_forget()
-        for delete in self.readmsg_deletes: delete.pack_forget()
+        for sender in self.readmsg_senders: sender.destroy()
+        for text in self.readmsg_texts: text.destroy()
+        for delete in self.readmsg_deletes: delete.destroy()
 
         self.readmsg_send_button.pack_forget()
         self.readmsg_logout_button.pack_forget()
@@ -211,7 +231,50 @@ class ChatApp:
         self.readmsg_texts = []
         self.readmsg_deletes = []
         self.readmsg_ids = []
+        self.reading_msg = False
 
+    def setup_selectuser(self):
+        self.selectuser_search_entry.pack()
+        self.selectuser_search_button.pack()
+        self.selectuser_showing.pack()
+        self.selectuser_leftbutton.pack()
+        self.selectuser_rightbutton.pack()
+
+        self.selectuser_fill_users()
+        self.selectuser_view_users()
+
+    def close_selectuser(self):
+        self.selectuser_search_entry.delete(0,'end')
+        self.selectuser_search_entry.pack_forget()
+        self.selectuser_search_button.pack_forget()
+        self.selectuser_start = 1
+        self.selectuser_end = 0
+        self.selectuser_showing.pack_forget()
+        self.selectuser_leftbutton.pack_forget()
+        self.selectuser_rightbutton.pack_forget()
+        self.selectuser_numusers = 0
+        for user in self.selectuser_users: user.destroy()
+        self.selectuser_users = []
+        for button in self.selectuser_sendbuttons: button.destroy()
+        self.selectuser_sendbuttons = []
+        self.selectuser_backbutton.pack_forget()
+
+    def setup_sendmsg(self, user):
+        print(f"sendmsg with user [{user}]")
+        self.sendmsg_user = user
+        self.sendmsg_compose_label.configure(text = f"Compose email to: {user}")
+        self.sendmsg_compose_label.pack()
+        self.sendmsg_text.pack()
+        self.sendmsg_sendbutton.pack()
+        self.sendmsg_backbutton.pack()
+
+    def close_sendmsg(self):
+        self.sendmsg_user = None
+        self.sendmsg_compose_label.pack_forget()
+        self.sendmsg_text.delete('1.0','end')
+        self.sendmsg_text.pack_forget()
+        self.sendmsg_sendbutton.pack_forget()
+        self.sendmsg_backbutton.pack_forget()
 
     def greeting_to_login(self):
         self.close_greeting()
@@ -249,7 +312,27 @@ class ChatApp:
         self.root.update_idletasks()
 
     def readmsg_to_selectuser(self):
-        pass
+        self.close_readmsg()
+        self.setup_selectuser()
+        self.root.update_idletasks()
+
+    def selectuser_to_readmsg(self):
+        self.close_selectuser()
+        self.setup_readmsg()
+        self.root.update_idletasks()
+
+    def selectuser_to_sendmsg(self, user):
+        self.close_selectuser()
+        self.setup_sendmsg(user)
+        self.root.update_idletasks()
+
+    def selectuser_to_sendmsg_wrapper(self, user):
+        return lambda : self.selectuser_to_sendmsg(user)
+
+    def sendmsg_to_readmsg(self):
+        self.close_sendmsg()
+        self.setup_readmsg()
+        self.root.update_idletasks()
 
     def login_account(self):
         message = encode_request("login", [self.username_entry.get(), self.password_entry.get()])
@@ -259,11 +342,11 @@ class ChatApp:
         data = data.decode("utf-8")
         if data == "SUCCESS: logged in":
             self.login_to_readmsg()
-        elif data == "Password is incorrect. Please try again":
+        elif data == "password is incorrect. please try again":
             self.reset_login()
             self.login_menu_wrong_pass.pack()
             self.root.update_idletasks()
-        elif data == "Username does not exist. Please create a new account":
+        elif data == "username does not exist. please create a new account":
             self.reset_login()
             self.login_menu_not_user.pack()
             self.root.update_idletasks()
@@ -277,10 +360,10 @@ class ChatApp:
         self.sock.sendall(message)
         data = self.sock.recv(1024)
         data = data.decode("utf-8")
-        if data == "Username taken. Please login with your password":
+        if data == "username taken. please login with your password":
             self.create_user_again_label.pack()
             self.root.update_idletasks()
-        elif data == "Enter password to create new account":
+        elif data == "enter password to create new account":
             self.username = self.username_entry.get()
             self.create_user_to_create_pass()
         else:
@@ -293,7 +376,7 @@ class ChatApp:
         self.sock.sendall(message)
         data = self.sock.recv(1024)
         data = data.decode("utf-8")
-        if data == "SUCCESS: account created. Please login with your new account":
+        if data == "SUCCESS: account created. please login with your new account":
             self.create_pass_to_greeting()
             self.greeting_created_label.pack()
             self.root.update_idletasks()
@@ -314,29 +397,140 @@ class ChatApp:
         self.root.update_idletasks()
 
     def logout(self):
-        pass
+        message = "logout".encode('utf-8')
+        self.sock.sendall(message)
+        data = self.sock.recv(1024)
+        data = data.decode("utf-8")
+
+        self.username = None 
+        self.readmsg_start = 1
+        self.num_msg = 0
+        self.reading_msg = False 
+
+        self.close_readmsg()
+        self.setup_greeting()
+        self.root.update_idletasks()
 
     def deleteacct(self):
-        pass
+        message = "delete_account".encode('utf-8')
+        self.sock.sendall(message)
+        data = self.sock.recv(1024)
+        data = data.decode("utf-8")
+
+        self.username = None 
+        self.readmsg_start = 1
+        self.num_msg = 0
+        self.reading_msg = False 
+
+        self.close_readmsg()
+        self.setup_greeting()
+        self.root.update_idletasks()
 
     def deletemsg(self, msgid):
-        pass
+        message = encode_request("delete_msg", [str(msgid)])
+        message = message.encode("utf-8")
+        self.sock.sendall(message)
+        data = self.sock.recv(1024)
+        data = data.decode("utf-8")
+
+        self.num_msg -= 1
+        if self.readmsg_start > 1 and self.num_msg < self.readmsg_start:
+            self.readmsg_start -= 5
+
+        self.close_readmsg()
+        self.setup_readmsg()
+        self.root.update_idletasks()
+
+    def deletemsg_wrapper(self, msgid):
+        return lambda : self.deletemsg(msgid)
+
+    def selectuser_fill_users(self):
+        message = encode_request("list_accounts", [self.selectuser_search_entry.get() + "*"]).encode('utf-8')
+        self.sock.sendall(message)
+        data = self.sock.recv(1024)
+        data = data.decode('utf-8')
+
+        users = decode_request(data)
+        self.selectuser_numusers = int(users[0])
+        users = users[1:]
+        self.selectuser_numusers = len(users)
+        self.selectuser_start = 1
+        self.selectuser_end = min(len(users), 5)
+
+        # reset previous users
+        for user in self.selectuser_users: user.destroy()
+        for button in self.selectuser_sendbuttons: button.destroy()
+        self.selectuser_users = []
+        self.selectuser_sendbuttons = []
+
+        for user in users:
+            user_label = Label(text = user)
+            user_button = Button(self.root, text = emoji.emojize(":airplane:"), command=self.selectuser_to_sendmsg_wrapper(user))
+            self.selectuser_users.append(user_label)
+            self.selectuser_sendbuttons.append(user_button)
+
+    def selectuser_view_users(self):
+        self.selectuser_backbutton.pack_forget()
+        
+        if self.selectuser_numusers == 0:
+            self.selectuser_showing.configure(text = "No users to show")
+            self.selectuser_leftbutton.configure(state='disabled')
+            self.selectuser_rightbutton.configure(state='disabled')
+        else:
+            self.selectuser_showing.configure(text = f"Showing {self.selectuser_start}-{self.selectuser_end} of {self.selectuser_numusers}")
+            if self.selectuser_start == 1:
+                self.selectuser_leftbutton.configure(state='disabled')
+            else:
+                self.selectuser_leftbutton.configure(state='normal')
+            if self.selectuser_end == len(self.selectuser_users):
+                self.selectuser_rightbutton.configure(state='disabled')
+            else:
+                self.selectuser_rightbutton.configure(state='normal')
+
+            for i in range(self.selectuser_start - 1, self.selectuser_end):
+                self.selectuser_users[i].pack()
+                self.selectuser_sendbuttons[i].pack()
+            
+            self.selectuser_backbutton.pack()
+
+    def selectuser_search(self):
+        self.selectuser_fill_users()
+        self.selectuser_view_users()
+        self.root.update_idletasks()
+
+    def selectuser_scroll_left(self):
+        for i in range(self.selectuser_start - 1, self.selectuser_end):
+            self.selectuser_users[i].pack_forget()
+            self.selectuser_sendbuttons[i].pack_forget()
+
+        self.selectuser_start -= 5
+        self.selectuser_end = min(self.selectuser_start + 4, self.selectuser_numusers)
+        self.selectuser_view_users()
+        self.root.update_idletasks()
+
+    def selectuser_scroll_right(self):
+        for i in range(self.selectuser_start - 1, self.selectuser_end):
+            self.selectuser_users[i].pack_forget()
+            self.selectuser_sendbuttons[i].pack_forget()
+
+        self.selectuser_start += 5
+        self.selectuser_end = min(self.selectuser_start + 4, self.selectuser_numusers)
+        self.selectuser_view_users()
+        self.root.update_idletasks()
+
+    def sendmsg(self):
+        message = encode_request("send", [self.sendmsg_user, self.sendmsg_text.get('1.0','end-1c')]).encode('utf-8')
+        self.sock.sendall(message)
+        data = self.sock.recv(1024)
+        data = data.decode("utf-8")
+
+        self.close_sendmsg()
+        self.setup_readmsg()
+        self.root.update_idletasks()
 
 def main():
     chatapp = ChatApp()
     chatapp.main_loop()
-
-    # while True:
-    #     message = input("Enter a message to send to the server: ")
-    #     if message == "exit":
-    #         break 
-    #     message = message.encode("utf-8")
-    #     s.sendall(message)
-    #     data = s.recv(1024)
-    #     data = data.decode("utf-8")
-    #     print(f"Received: {data}")
-
-    # s.close()
 
 if __name__ == "__main__":
     main()
