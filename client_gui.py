@@ -2,6 +2,7 @@ import socket
 import tkinter as tk
 from tkinter import *
 from tkinter import scrolledtext
+from tkinter import ttk
 from utils import encode_request, decode_request
 import emoji
 import sys
@@ -62,13 +63,13 @@ class ChatApp:
         self.login_menu_wrong_pass = Label(text = "Password is incorrect; please try again", fg = 'red')
 
         # create_user menu
-        self.create_user_label = Label(text = "Input Your New Username:")
+        self.create_user_label = Label(self.root, text = "Input Your New Username:")
         self.create_user_create_button = Button(self.root, text = "Create Username", command = self.create_new_user)
         self.create_user_back_button = Button(self.root, text = "Back to Menu", command=self.create_user_to_greeting)
         self.create_user_again_label = Label(self.root, text = "Username taken; please log in or choose another username", fg='red')
 
         # create_pass menu
-        self.create_pass_label = Label(text = "Input Your New Password:")
+        self.create_pass_label = Label(self.root, text = "Input Your New Password:")
         self.create_pass_create_button = Button(self.root, text = "Create Password", command = self.create_new_pass)
         self.create_pass_back_button = Button(self.root, text = "Back to Menu", command=self.create_pass_to_greeting)
 
@@ -77,10 +78,14 @@ class ChatApp:
         self.readmsg_texts = []
         self.readmsg_ids = []
         self.readmsg_deletes = []
-        self.readmsg_nomsg = Label(text = "No messages to show (that's tough)")
-        self.readmsg_showing = Label(text = "")
-        self.readmsg_leftbutton = Button(self.root, text = "<", command=self.readmsg_scroll_left)
-        self.readmsg_rightbutton = Button(self.root, text = ">", command=self.readmsg_scroll_right)
+        self.readmsg_nomsg = Label(self.root, text = "No messages to show (that's tough)")
+        self.readmsg_showing_frame = ttk.Frame(self.root)
+        self.readmsg_showing = Label(self.readmsg_showing_frame, text = "")
+        self.readmsg_leftbutton = Button(self.readmsg_showing_frame, text = "<", command=self.readmsg_scroll_left)
+        self.readmsg_rightbutton = Button(self.readmsg_showing_frame, text = ">", command=self.readmsg_scroll_right)
+        self.readmsg_showing.pack(side='left')
+        self.readmsg_leftbutton.pack(side='left')
+        self.readmsg_rightbutton.pack(side='left')
         self.readmsg_send_button = Button(self.root, text = "Send Message", command=self.readmsg_to_selectuser)
         self.readmsg_logout_button = Button(self.root, text = "Log Out", command=self.logout)
         self.readmsg_deleteacct_button = Button(self.root, text = "Delete Account", command=self.deleteacct)
@@ -203,6 +208,10 @@ class ChatApp:
             data = self.sock.recv(1024).decode('utf-8')
             self.num_msg = int(data)
 
+
+        if self.readmsg_start > 1 and self.num_msg < self.readmsg_start:
+            self.readmsg_start -= 5
+
         if self.num_msg == 0:
             self.readmsg_nomsg.pack()
         else:
@@ -223,18 +232,18 @@ class ChatApp:
                 args = decode_request(data)
             upper_bound = int(args[0])
             self.readmsg_showing.configure(text = f"Showing {self.readmsg_start}-{upper_bound} of {self.num_msg}:")
-            self.readmsg_showing.pack()
+            self.readmsg_showing_frame.pack()
             if self.readmsg_start == 1:
                 self.readmsg_leftbutton.configure(state='disabled')
-            self.readmsg_leftbutton.pack()
+            # self.readmsg_leftbutton.pack()
             if upper_bound == self.num_msg:
                 self.readmsg_rightbutton.configure(state='disabled')
-            self.readmsg_rightbutton.pack()
+            # self.readmsg_rightbutton.pack()
 
             # num_showing = upper_bound - self.readmsg_start + 1
             for i in range(self.readmsg_start - 1, upper_bound):
                 index = 1 + 3*i
-                cur_sender = Label(text = args[index])
+                cur_sender = Label(text = f"From: {args[index]}")
                 cur_text = Label(text = args[index+2])
                 cur_delete = Button(self.root, text = emoji.emojize(":wastebasket:"), command = self.deletemsg_wrapper(int(args[index+1])))
 
@@ -254,11 +263,12 @@ class ChatApp:
 
     def close_readmsg(self):
         self.readmsg_nomsg.pack_forget()
-        self.readmsg_showing.pack_forget()
-        self.readmsg_leftbutton.pack_forget()
+        # self.readmsg_showing.pack_forget()
+        # self.readmsg_leftbutton.pack_forget()
         self.readmsg_leftbutton.configure(state='normal')
-        self.readmsg_rightbutton.pack_forget()
+        # self.readmsg_rightbutton.pack_forget()
         self.readmsg_rightbutton.configure(state='normal')
+        self.readmsg_showing_frame.pack_forget()
 
         for sender in self.readmsg_senders: sender.destroy()
         for text in self.readmsg_texts: text.destroy()
@@ -528,8 +538,6 @@ class ChatApp:
             data = data.decode("utf-8")
 
         self.num_msg -= 1
-        if self.readmsg_start > 1 and self.num_msg < self.readmsg_start:
-            self.readmsg_start -= 5
 
         self.close_readmsg()
         self.setup_readmsg()
