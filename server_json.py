@@ -103,7 +103,6 @@ def delete_msg(IDs, data):
     # updated_messages = [msg for msg in messages if msg[1] not in IDs]
     # users[data.username] = (users[data.username][0], updated_messages)
     updated_messages = [msg for msg in messages if msg[1] not in IDs]
-    print(IDs)
     users[data.username][1] = updated_messages
     return {"status": "success", "message": "messages deleted"}
 

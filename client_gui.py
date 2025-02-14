@@ -244,7 +244,7 @@ class ChatApp:
             for i in range(self.readmsg_start - 1, upper_bound):
                 index = 1 + 3*i
                 cur_sender = Label(text = f"From: {args[index]}")
-                cur_text = Label(text = args[index+2])
+                cur_text = Label(text = args[index+2], wraplength=300)
                 cur_delete = Button(self.root, text = emoji.emojize(":wastebasket:"), command = self.deletemsg_wrapper(int(args[index+1])))
 
                 cur_sender.pack()

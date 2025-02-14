@@ -138,12 +138,12 @@ def test_messages_json():
                                                                                         {"sender": "andrew", "id": "1", "message": "a1"}, \
                                                                                         {"sender": "andrew", "id": "0", "message": "a0"}]})
     assert(server_json.num_msg(data) == {"status": "success", "message": "5"})
-    assert(server_json.delete_msg([1, 2], data) == {"status": "success", "message": "messages deleted"})
+    assert(server_json.delete_msg(["1", "2"], data) == {"status": "success", "message": "messages deleted"})
     assert(server_json.read(10, data) == {"status": "success", "count": 3, "messages": [{"sender": "andrew", "id": "4", "message": "a4"}, \
                                                                                         {"sender": "andrew", "id": "3", "message": "a3"}, \
                                                                                         {"sender": "andrew", "id": "0", "message": "a0"}]})
     assert(server_json.num_msg(data) == {"status": "success", "message": "3"})
-    assert(server_json.delete_msg([4], data) == {"status": "success", "message": "messages deleted"})
+    assert(server_json.delete_msg(["4"], data) == {"status": "success", "message": "messages deleted"})
     assert(server_json.read(10, data) == {"status": "success", "count": 2, "messages": [{"sender": "andrew", "id": "3", "message": "a3"}, \
                                                                                         {"sender": "andrew", "id": "0", "message": "a0"}]})
     assert(server_json.num_msg(data) == {"status": "success", "message": "2"})
