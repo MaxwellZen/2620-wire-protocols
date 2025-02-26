@@ -21,8 +21,9 @@ create_account username:
 - Creates new account with given username. If the username is taken, prompt user to log in.
 - Username limited to 32 characters
 
-supply_pass password:
+supply_pass username password:
 - Supplies password for account creation.
+- Note: unlike original implementation, requires providing username a second time to confirm
 
 login username password:
 - Logs in to an account.
