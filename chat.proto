@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package chat;
+
+service Chat {
+    rpc create_account (CreateAccount) returns (StatusReply);
+    rpc supply_pass (SupplyPass) returns (StatusReply);
+    rpc login (Login) returns (StatusReply);
+    rpc list_accounts (ListAccounts) returns (ListAccountsReply);
+    rpc send (Send) returns (StatusReply);
+    rpc read (Read) returns (ReadReply);
+    rpc delete_msg (DeleteMessages) returns (StatusReply);
+    rpc delete_account (DeleteAccount) returns (StatusReply);
+    rpc logout (Logout) returns (StatusReply);
+    rpc num_msg (NumMessages) returns (NumMessagesReply);
+}
+
+message StatusReply {
+    string message = 1;
+}
+
+message CreateAccount {
+    string username = 1;
+}
+
+message SupplyPass {
+    string username = 1;
+    string password = 2;
+}
+
+message Login {
+    string username = 1;
+    string password = 2;
+}
+
+message ListAccounts {
+    string pattern = 1;
+}
+
+message ListAccountsReply {
+    string count = 1;
+    repeated string accounts = 2;
+}
+
+message Send {
+    string sender = 1;
+    string recipient = 2;
+    string message = 3;
+}
+
+message Read {
+    string username = 1;
+    int32 count = 2;
+}
+
+message ReadReply {
+    string count = 1;
+    repeated string messages = 2;
+}
+
+message DeleteMessages {
+    string username = 1;
+    repeated int32 ids = 2;
+}
+
+message DeleteMessagesReply {
+    string message = 1;
+}
+
+message DeleteAccount {
+    string username = 1;
+}
+
+message DeleteAccountReply {
+    string message = 1;
+}
+
+message Logout {
+    string username = 1;
+}
+
+message LogoutReply {
+    string message = 1;
+}
+
+message NumMessages {
+    string username = 1;
+}
+
+message NumMessagesReply {
+    string count = 1;
+}

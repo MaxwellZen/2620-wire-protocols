@@ -1,0 +1,23 @@
+2/25
+___
+
+Having already written all of the original code, it was relatively easy for us to 
+refactor the code to be used with gRPC. Unlike with the original wire protocol, it 
+was quite convenient to have gRPC automatically serialize the data, without requiring
+us to create custom encode/decode functions. The enforcement of the typings of in 
+the chat.proto file also helped make the design of the code more clear, since we had
+to decide on each field that would be used beforehand. Testing the application seemed
+to be easier this time around, both because we are more familiar with the process of 
+testing these functions (and we know the code generally works correctly), but also as 
+gRPC provided a more robust protocol for message serailization, so we had better
+information about where errors might arise (for instance, incorrect field definitions).
+
+The main changes to the code were that we made the command match statement in the
+client file rather than in the server file, as the information about possible states 
+had to be encoded into the request to be sent to the server at once. States such as 
+whether a client was logged into an account had to be stored client-side, and this 
+information would then be used to send the information to the server, as gRPC is
+stateless. Since gRPC uses Protocol Buffers, the size of the data transmitted is smaller, 
+as it is done in binary as opposed to the strings we used in our custom wire protocol and
+with the JSON implementation. 
+
