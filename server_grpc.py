@@ -3,11 +3,14 @@ import chat_pb2
 import chat_pb2_grpc
 from concurrent import futures
 from fnmatch import fnmatch
+import sys
 
 class Chat(chat_pb2_grpc.Chat):
+    # dictionary for storying user information
     def __init__(self):
         self.users = {}
 
+    # all functions have the same functionality as their non-grpc equivalents as in server.py   
     def create_account(self, request, context):
         username = request.username
         if username in self.users:
@@ -86,7 +89,13 @@ class Chat(chat_pb2_grpc.Chat):
 
 
 def serve():
-    PORT = "54400"
+    # grabs port from command-line arguments
+    if len(sys.argv) < 2 or not sys.argv[1].isdigit():
+        print("Please provide a port for the connection")
+        print("Example: python server_grpc.py 54400")
+        sys.exit(0)
+    PORT = sys.argv[1]
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     chat_pb2_grpc.add_ChatServicer_to_server(Chat(), server)
     server.add_insecure_port("[::]:" + PORT)

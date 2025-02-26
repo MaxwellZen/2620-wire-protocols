@@ -1,16 +1,24 @@
 import grpc
 import chat_pb2
 import chat_pb2_grpc
+import sys
 
-PORT = "54400"
+# grabs port from command-line arguments
+if len(sys.argv) < 2 or not sys.argv[1].isdigit():
+    print("Please provide a port for the connection")
+    print("Example: python client_grpc.py 54400")
+    sys.exit(0)
+PORT = sys.argv[1]
 
 def run():
+    # stores what user is logged in at any given point in time
     global logged_in_user
     with grpc.insecure_channel("localhost:" + PORT) as channel:
         stub = chat_pb2_grpc.ChatStub(channel)
         logged_in_user = None
         
         while True:
+            # handles incoming commands
             command = input("Enter command: ").split()
             match command[0]:
                 case "create_account":
@@ -77,8 +85,6 @@ def run():
                     continue
             
             print(reply)
-            print("LENGTH OF COMMAND: " + str(len(command)))
-            print("LENGTH OF REPLY: " + str(len(reply)))
 
 if __name__ == "__main__":
     run()

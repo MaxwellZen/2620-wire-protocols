@@ -8,8 +8,8 @@ us to create custom encode/decode functions. The enforcement of the typings of i
 the chat.proto file also helped make the design of the code more clear, since we had
 to decide on each field that would be used beforehand. Testing the application seemed
 to be easier this time around, both because we are more familiar with the process of 
-testing these functions (and we know the code generally works correctly), but also as 
-gRPC provided a more robust protocol for message serailization, so we had better
+testing these functions (and we know the code generally works correctly), but also 
+because gRPC provided a more robust protocol for message serailization, so we had better
 information about where errors might arise (for instance, incorrect field definitions).
 
 The main changes to the code were that we made the command match statement in the
